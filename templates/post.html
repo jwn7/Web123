@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>댓글 시스템</title>
+    <!-- 🔗 외부 CSS 파일 불러오기 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <!-- 🧠 수정/답글 폼 토글을 위한 JavaScript -->
+    <script>
+        // 수정 폼 보이기/숨기기 토글
+        function toggleEditForm(id) {
+            const form = document.getElementById('edit-form-' + id);
+            form.style.display = (form.style.display === 'none') ? 'block' : 'none';
+        }
+
+        // 답글 폼 보이기/숨기기 토글
+        function toggleReplyForm(id) {
+            const form = document.getElementById('reply-form-' + id);
+            form.style.display = (form.style.display === 'none') ? 'block' : 'none';
+        }
+    </script>
+</head>
+<body>
+
+<!-- 🧾 댓글 목록 표시 -->
+<h2>댓글 목록</h2>
+
+{% for comment in comments %}
+    <div class="comment" style="margin-bottom: 10px;">
+        <!-- 🟡 댓글 본문 + 버튼을 좌우 정렬 -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p style="margin: 0;">{{ comment.content }}</p>
+
+            <!-- 삭제된 댓글은 버튼 숨김 -->
+            {% if comment.content != '삭제된 댓글입니다.' %}
+            <div style="display: flex; gap: 8px;">
+                <button onclick="toggleEditForm({{ comment.id }})">수정</button>
+
+                <form action="/delete/{{ comment.id }}" method="POST" style="display:inline;">
+                    <button type="submit">삭제</button>
+                </form>
+
+                <button onclick="toggleReplyForm({{ comment.id }})">답글</button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ✏️ 댓글 수정 폼 (기본 숨김 상태) -->
+        <form action="/edit/{{ comment.id }}" method="POST" id="edit-form-{{ comment.id }}" style="display: none; margin-top: 5px;">
+            <input type="text" name="content" value="{{ comment.content }}" style="width: 80%;">
+            <button type="submit">수정 완료</button>
+        </form>
+
+        <!-- 💬 대댓글 작성 폼 -->
+        <form action="/comment" method="POST" id="reply-form-{{ comment.id }}" style="display: none; margin-top: 5px; margin-left: 20px;">
+            <input type="hidden" name="parent_id" value="{{ comment.id }}">
+            <input type="text" name="content" placeholder="대댓글 작성" style="width: 75%;">
+            <button type="submit">작성</button>
+        </form>
+
+        <!-- 🟢 대댓글 출력 -->
+        <div style="margin-top: 5px; margin-left: 20px;">
+            {% for reply in comment.replies %}
+                <div class="reply" style="margin-top: 5px;">
+                    <!-- 대댓글 내용 + 버튼 -->
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <p style="margin: 0;">{{ reply.content }}</p>
+
+                        <!-- 삭제된 대댓글은 버튼 숨김 -->
+                        {% if reply.content != '삭제된 댓글입니다.' %}
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="toggleEditForm({{ reply.id }})">수정</button>
+                            <form action="/delete/{{ reply.id }}" method="POST" style="display:inline;">
+                                <button type="submit">삭제</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- ✏️ 대댓글 수정 폼 -->
+                    <form action="/edit/{{ reply.id }}" method="POST" id="edit-form-{{ reply.id }}" style="display: none; margin-top: 5px; margin-left: 10px;">
+                        <input type="text" name="content" value="{{ reply.content }}" style="width: 70%;">
+                        <button type="submit">수정 완료</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endfor %}
+
+<!-- 📝 새로운 댓글 작성 폼 -->
+<hr>
+<form action="/comment" method="POST" style="margin-top: 20px;">
+    <div style="display: flex; gap: 10px; align-items: flex-start;">
+        <textarea name="content" placeholder="댓글 작성" rows="3" cols="60" style="resize: none;"></textarea>
+        <button type="submit" style="height: 100%;">댓글 작성</button>
+    </div>
+</form>
+
+</body>
+</html>
